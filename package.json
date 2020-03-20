@@ -1,0 +1,44 @@
+{
+  "name": "maana-nlp-numbers",
+  "author": "Maana, Inc",
+  "license": "MIT",
+  "version": "1.0.0",
+  "description": "A simple monadic parser for natural language numbers",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maana-io/maana-nlp-numbers.git"
+  },
+  "main": "index.js",
+  "scripts": {
+    "precommit": "lint-staged",
+    "prettier": "prettier --write \"src/**/*.{js,jsx}\"",
+    "test": "mocha"
+  },
+  "lint-staged": {
+    "src/**/*.{js,jsx,json,css}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "devDependencies": {
+    "mocha": "^7.1.0",
+    "prettier": "^1.19.1",
+    "require-dir": "^0.1.0"
+  },
+  "dependencies": {
+  },
+  "bugs": {
+    "url": "https://github.com/maana-io/maana-nlp-numbers/issues"
+  },
+  "homepage": "https://github.com/maana-io/maana-nlp-numbers#readme",
+  "directories": {
+    "example": "examples",
+    "lib": "src"
+  },
+  "keywords": [
+    "nlp",
+    "number",
+    "parse",
+    "monad"
+  ]
+}
