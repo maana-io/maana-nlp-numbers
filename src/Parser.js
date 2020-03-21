@@ -20,8 +20,8 @@ const optional = p => P.alt(p, P.succeed(null))
  * surface form and any trailing token separators, and return the normal form 
 */
 const token = (surfaceForm,normalForm) => 
-  P.seq(P.string(surfaceForm),
-        P.regexp( /\s+|[,.!?;-]\s*/ ).or(P.eof)
+  P.seq(P.regexp(new RegExp(surfaceForm,"i")),
+        P.regexp( /\s+|[,-]\s*/ ).or(P.eof)
     ).map( _ => normalForm)
 
 /** given a parser, this parser combinator will optionally parse the conjunction
@@ -119,34 +119,38 @@ var L = P.createLanguage({
     optional(and(r.ones))
     ).thru(combineParsedValues),
   // parse hundreds, including those preceeded by teens  
+  lessThan100: r => r.teens.or(r.tens).or(r.ten).or(r.ones),
+  lessThanThousand: r => r.properHundreds.or(r.lessThan100), 
+  lessThanMillion: r => r.thousands.or(r.lessThanThousand), 
+  lessThanBillion: r => r.millions.or(r.lessThanMillion), 
   hundreds: r => P.seq( 
     r.teens.or(r.ones),
     r.hundred,
-    optional(and(r.teens.or(r.tens).or(r.ten).or(r.ones)))    
+    optional(and(r.lessThan100))    
     ).thru( combineParsedValues ),
   // parse proper hundreds (those that cannot be preceeded by a teen)
   properHundreds: r => P.seq( 
     r.ones,
     r.hundred,
-    optional(and(r.teens.or(r.tens).or(r.ones)))    
+    optional(and(r.lessThan100))    
     ).thru(combineParsedValues),
  // parse thousands   
  thousands: r => P.seq(
-    r.properHundreds.or(r.teens).or(r.tens).or(r.ten).or(r.ones),
+    r.lessThanThousand,
     r.thousand,
-    optional(and(r.properHundreds.or(r.teens.or(r.tens).or(r.ten).or(r.ones))))
+    optional(and(r.lessThanThousand))
   ).thru( combineParsedValues ),
   // parse millions
   millions: r => P.seq(
-    r.hundreds.or(r.teens).or(r.tens).or(r.ten).or(r.ones),
+    r.lessThanThousand,
     r.million,
-    optional(and(r.thousands.or(r.hundreds).or(r.teens).or(r.tens).or(r.ten).or(r.ones)))
+    optional(and(r.lessThanMillion))
   ).thru( combineParsedValues),
   //parse billions
   billions: r => P.seq(
-    r.teens.or(r.tens).or(r.ten).or(r.ones),
+    r.lessThanThousand,
     r.billion,
-    optional(and(r.millions.or(r.thousands).or(r.hundreds).or(r.teens).or(r.tens).or(r.ten).or(r.ones)))
+    optional(and(r.lessThanBillion))
   ).thru( combineParsedValues )
 });
 

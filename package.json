@@ -21,11 +21,12 @@
     ]
   },
   "devDependencies": {
-    "mocha": "^7.1.0",
+    "mocha": "^7.1.1",
     "prettier": "^1.19.1",
     "require-dir": "^0.1.0"
   },
   "dependencies": {
+    "parsimmon": "^1.13.0"
   },
   "bugs": {
     "url": "https://github.com/maana-io/maana-nlp-numbers/issues"
