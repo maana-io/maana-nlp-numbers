@@ -11,147 +11,124 @@ DESCRIPTION: This module exports a monadic parser for natural language numbers.
 'use strict';
 const P = require('parsimmon')
 
-/** Given a parser, this parser combinator will return a parser that will either 
- * parse that value or return null without consuming any input.
+/** Given a parser, return a parser that will either return the result of that
+ * parser, or consume no input.
+ * @param parser - the given parser
  */
-const optional = p => P.alt(p, P.succeed(null))
+function optional(parser) {
+  return parser.fallback(null)
+}
 
 /** Given a surface form and a normal form, return a parser that will parse the 
  * surface form and any trailing token separators, and return the normal form 
+ * @param surfaceForm - the surface form of the token
+ * @param normalForm - the numeric representation of the token
 */
-const token = (surfaceForm,normalForm) => 
-  P.seq(P.regexp(new RegExp(surfaceForm,"i")),
-        P.regexp( /\s+|[,-]\s*/ ).or(P.eof)
-    ).map( _ => normalForm)
+function token(surfaceForm,normalForm) { 
+  return P.seqMap(
+    P.regexp(new RegExp(surfaceForm,"i")),
+    P.regexp(/\s+|[,-]\s*/).desc("token break").or(P.end),
+    _ => normalForm).desc(surfaceForm)
+}
+
+const hundred = token("hundred",100)
+const thousand = token("thousand",1000)
+const million = token("million",1000000)
+const billion = token("billion",1000000000)
+
+/*** A collection of token parsers for powers of 10.  This list is used by
+ * the big number parser to determine the size of number expressions of the
+ * form <lessThan1000> <someNumber>.
+ */
+const powersOfTen = [ billion, million, thousand, P.succeed(1) ]
+
+/** Given a power of ten, return a list of parsers for powers of ten that are 
+ * smaller. 
+ * @param n - an integer representing a power of ten (that is divisible by 3)
+ * @returns - a subset of powersOfTen token parsers for numbers smaller than 
+ *   the given power
+ * */
+function smallerPowersOfTen(n) { 
+  const i = 4- Math.floor(Math.log10(n)/3)
+  return powersOfTen.slice(i)
+}
 
 /** given a parser, this parser combinator will optionally parse the conjunction
  * "and" followed by the given parser.   */
-const and =  p => P.seq(optional(token("and",null)),p).map( xs => xs[1])
+function and(parser) {
+  return P.seqMap(
+    optional(token("and",null)),
+    parser, 
+    function (_,x) { return x })
+}
 
-/** Given a parser that returns a triple containing the leading numeric value,
- * the power of ten and the trailing numeric value, this combinator returns
- * the combined numeric value of the parse. */
-const combineParsedValues = p => p.map( xs => xs[0]*xs[1] + (xs[2] || 0))
+const ones = P.alt(
+    token("one",1), token("two",2), token("three",3),
+    token("four",4), token("five",5), token("six",6), 
+    token("seven",7), token("eight",8), token("nine",9)
+).desc("ones")
 
-/** This object defines the recursive numeric parsers for parsing natural 
- * language numbers.   The main entry point for parsing is the field 
- * "number" */
-var L = P.createLanguage({
-  /** given a self reference, return a parser that will parse any natural 
-   * language number between zero and 1 trillion - 1. 
-   */
-  number: r => 
-    r.billions
-    .or(r.millions)
-    .or(r.thousands)
-    .or(r.hundreds)
-    .or(r.teens)
-    .or(r.tens)
-    .or(r.dozens)
-    .or(r.scores)
-    .or(r.ones)
-    .or(r.ten)
-    .or(r.zero)
-    .or(r.aNumber),
-  /** Parse a number with a leading "a" */
-  aNumber: r => 
-    P.seq(
-      token("a",1),
-      r.billion.or(r.million).or(r.thousand).or(r.hundred).or(r.dozen).or(r.score),
-      P.succeed(0)
-    ).thru( combineParsedValues ),
-  /** Parse Various Number tokens. */  
-  ten: _ => token("ten",10),
-  zero: _ => token("zero",0),
-  billion: _ => token("billion",1000000000),
-  million: _ => token("million",1000000),
-  thousand: _ => token("thousand",1000),
-  hundred: _ => token("hundred",100),
-  score: _ => token("score",20),
-  dozen: _ => token("dozen",12),
-  // parsers for single digits 
-  ones: _  => 
-    token("one",1)
-    .or(token("two",2))
-    .or(token("three",3))
-    .or(token("four",4))
-    .or(token("five",5))
-    .or(token("six",6))
-    .or(token("seven",7))
-    .or(token("eight",8))
-    .or(token("nine",9))
-    .desc("ones"),
-  // parsers for numbers between 11 and 19.  
-  teens: _  => 
-    token("eleven",11)
-    .or(token("twelve",12))
-    .or(token("thirteen",13))
-    .or(token("fourteen",14))
-    .or(token("fifteen",15))
-    .or(token("sixteen",16))
-    .or(token("seventeen",17))
-    .or(token("eighteen",18))
-    .or(token("nineteen",19))
-    .desc("teens"),
+const teens = P.alt(
+  token("eleven",11), token("twelve",12), token("thirteen",13),
+  token("fourteen",14), token("fifteen",15), token("sixteen",16),
+  token("seventeen",17), token("eighteen",18), token("nineteen",19)
+).desc("teens")
+
   // Parse multiples of 10 (but not ten)  
-  tens: r => P.seq(
-    token("twenty",2)
-    .or(token("thirty",3))
-    .or(token("forty",4))
-    .or(token("fifty",5))
-    .or(token("sixty",6))
-    .or(token("seventy",7))
-    .or(token("eighty",8))
-    .or(token("ninety",9)),
-    P.succeed(10),
-    optional(and( r.ones))
-  ).thru( combineParsedValues ),
-  // parse dozenes
-  dozens: r => P.seq(
-    r.ones, 
-    r.dozen, 
-    optional(and(r.ones))
-    ).thru(combineParsedValues),
-  // parse scores  
-  scores: r => P.seq(
-    r.ones, 
-    r.score, 
-    optional(and(r.ones))
-    ).thru(combineParsedValues),
-  // parse hundreds, including those preceeded by teens  
-  lessThan100: r => r.teens.or(r.tens).or(r.ten).or(r.ones),
-  lessThanThousand: r => r.properHundreds.or(r.lessThan100), 
-  lessThanMillion: r => r.thousands.or(r.lessThanThousand), 
-  lessThanBillion: r => r.millions.or(r.lessThanMillion), 
-  hundreds: r => P.seq( 
-    r.teens.or(r.ones),
-    r.hundred,
-    optional(and(r.lessThan100))    
-    ).thru( combineParsedValues ),
-  // parse proper hundreds (those that cannot be preceeded by a teen)
-  properHundreds: r => P.seq( 
-    r.ones,
-    r.hundred,
-    optional(and(r.lessThan100))    
-    ).thru(combineParsedValues),
- // parse thousands   
- thousands: r => P.seq(
-    r.lessThanThousand,
-    r.thousand,
-    optional(and(r.lessThanThousand))
-  ).thru( combineParsedValues ),
-  // parse millions
-  millions: r => P.seq(
-    r.lessThanThousand,
-    r.million,
-    optional(and(r.lessThanMillion))
-  ).thru( combineParsedValues),
-  //parse billions
-  billions: r => P.seq(
-    r.lessThanThousand,
-    r.billion,
-    optional(and(r.lessThanBillion))
-  ).thru( combineParsedValues )
-});
+const tens = P.seqMap(
+  P.alt(
+    token("twenty",20), token("thirty",30),token("forty",40),
+    token("fifty",50), token("sixty",60), token("seventy",70),
+    token("eighty",80), token("ninety",90)
+).desc("tens"),
+  optional(and(ones)),
+  function (t,o) { return t + (o||0)}
+)
 
-module.exports = L.number
+// A parser for numbers less than one hundred. 
+const lessThan100 = P.alt(teens, tens, token("ten",10), ones)
+
+// parse proper hundreds (those that cannot be preceeded by a teen)
+const properHundreds = P.seqMap(
+  ones,
+  hundred,
+  optional(and(lessThan100)),
+  function(h, c, tensAndOnes){ return h*c + (tensAndOnes||0)}    
+)
+
+const lessThanThousand = P.alt(properHundreds, lessThan100)
+
+function tailParser( [mult,base] ) {
+  if (base > 100 ) return optional(and(
+    bigNumberParser(smallerPowersOfTen(base)))).map( o => base*mult+(o||0) )  
+  if (base ==1 ) return P.succeed(mult)
+  if (base <100) return optional(and(ones)).map( o => base*mult+(o||0) )  
+  if (mult < 20 ) return optional(and(lessThan100)).map( o => base*mult+(o||0))
+  return P.fail("Expected one of the following:\n\nEOF, and, billion, million, thousand")  
+}
+
+function bigNumberParser(ps) { 
+  return P.seq(
+    lessThanThousand, 
+    P.alt(...ps) 
+).chain(ns => optional(and(tailParser(ns))))
+}
+
+const specialNumbersParser = P.seq(
+  P.alt(ones, token("a",1)), 
+  P.alt(token("dozen",12), token("score",20), hundred, thousand, million, billion) 
+).chain(ns => optional(and(tailParser(ns))))
+
+/** A parser that will parse the natural language numbers between zero and 
+ * 999999999999.
+ * @param 
+ */
+const numberParser = P.alt(
+  bigNumberParser([hundred].concat(powersOfTen)),
+  specialNumbersParser,
+  token("zero",0)
+)
+
+module.exports = numberParser
+
+console.log(numberParser.tryParse("a billion and seven million"))// and Five hundred and Sixty thousand and One hundred and Eighty"))
