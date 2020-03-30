@@ -6,11 +6,5 @@
 */dist
 **/node_modules
 **/package-lock.json
-**/spec/Performance/ExpectedButNotObserved.json
-**/spec/Performance/Observed*.json
 **/bin
-service/library
 artifacts
-this.env
-teamcity
-**/teamcity

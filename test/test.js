@@ -5,6 +5,8 @@ const ones = ["One","Two","Three","Four","Five","Six","Seven","Eight","Nine"]
 const tens = ["Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"]
 const teens = ["Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"]
 
+
+
 const num = (n) => {
     const b = Math.floor(n/1000000)
     const m = Math.floor(n/1000000)
@@ -49,7 +51,6 @@ const num = (n) => {
     }    
 }
     
-
 describe('tryParse', function() {
     it('should parse zero', function() {
         assert.equal(parser.tryParse("zero"), 0);

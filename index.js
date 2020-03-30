@@ -1,5 +1,5 @@
-const parse = require('./src/parser')
+const numberParser = require('./src/parser')
 
 module.export = { 
-    parse
+    parse:numberParser
 }
