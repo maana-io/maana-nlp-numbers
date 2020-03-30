@@ -220,5 +220,3 @@ module.exports = {
   parse: function(str) { return numberParser.tryParse(str)},
   extract: extract
 }
-
-console.log( 

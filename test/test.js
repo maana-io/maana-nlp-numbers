@@ -1,5 +1,5 @@
 const assert = require('assert');
-const parser = require('../src/Parser')
+const { parser } = require('../src/Parser')
 
 const ones = ["One","Two","Three","Four","Five","Six","Seven","Eight","Nine"]
 const tens = ["Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"]

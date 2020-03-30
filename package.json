@@ -3,10 +3,10 @@
   "author": "Maana, Inc",
   "license": "MIT",
   "version": "1.0.0",
-  "description": "A simple monadic parser for natural language numbers",
+  "description": "A simple, deterministic, monadic parser for natural language numbers",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/maana-io/maana-nlp-numbers.git"
+    "url": "https://github.com/maana-io/maana-nlp-numbers.git"
   },
   "main": "index.js",
   "scripts": {
