@@ -33,6 +33,14 @@ function token(surfaceForm,normalForm) {
 
 const tokensep = P.alt(P.whitespace, P.newline)
 
+const punctuation = P.regexp(/["\-_';:!\.\,?`]+/)
+
+const anyToken = P.seq(
+  P.regexp(new RegExp(/[^\s"\-_';:!\.\,?`]+/)),
+  P.lookahead(P.regexp(/$|\s+|["\-_';:!\.\,?`]/))
+  )
+
+
 /** A parser for the hundreds token.   Returns the normal form (100) on 
  * success */
 const hundred = token("hundred",100)
@@ -193,7 +201,24 @@ const numberParser = P.alt(
   token("zero",0)
 )
 
-module.exports = numberParser
+/** Given a string, extract all instances of natural language numeric entities 
+ * from the string, returning thier start and end locations ( offset, line, column )
+ * and the extracted value.   
+ */
+function extract( str ) {
+  return P.sepBy(
+    P.alt(
+      punctuation.map( _ => null), 
+      numberParser.mark(), 
+      anyToken.map( _ => null)
+    ), optional(tokensep)
+  ).tryParse( str ).filter(x => x !== null)
+}
 
-//console.log(numberParser.tryParse("Five hundred and Fifty Five thousand and Five hundred and Thirty Eight"))
-console.log(numberParser.tryParse("two thousand and two"))
+module.exports = {
+  parser: numberParser,
+  parse: function(str) { return numberParser.tryParse(str)},
+  extract: extract
+}
+
+console.log( 
