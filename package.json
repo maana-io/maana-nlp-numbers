@@ -6,7 +6,7 @@
   "description": "A simple, deterministic, monadic parser for natural language numbers",
   "repository": {
     "type": "git",
-    "url": "https://github.com/maana-io/maana-nlp-numbers.git"
+    "url": "git+https://github.com/maana-io/maana-nlp-numbers.git"
   },
   "main": "index.js",
   "scripts": {
@@ -33,8 +33,7 @@
   },
   "homepage": "https://github.com/maana-io/maana-nlp-numbers#readme",
   "directories": {
-    "example": "examples",
-    "lib": "src"
+    "test": "test"
   },
   "keywords": [
     "nlp",
