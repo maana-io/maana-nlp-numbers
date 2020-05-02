@@ -1,5 +1,6 @@
 const assert = require('assert');
 const { parser } = require('../src/Parser')
+const P = require('parsimmon')
 
 const ones = ["One","Two","Three","Four","Five","Six","Seven","Eight","Nine"]
 const tens = ["Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"]
@@ -138,6 +139,35 @@ describe('tryParse', function() {
             assert.equal(parser.tryParse(`one billion and ${num(k)}`), 1000000000+k ) 
             assert.equal(parser.tryParse(`one billion, ${num(j)} million`), 1000000000+j*1000000)
         }
+    })
+    it('should compose with another parser', function() {
+        const year = P.string('year')
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('one year'),[1,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('ten year'),[10,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('twenty year'),[20,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('twenty one year'),[21,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('twenty and one year'),[21,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('one dozen year'),[12," ",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('one hundred year'),[100,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('one hundred and one year'),[101,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('one hundred and ten year'),[110,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('one hundred and twenty year'),[120,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('one hundred and twenty one year'),[121,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('one hundred and twenty and one year'),[121,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('twelve hundred year'),[1200," ",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('nineteen hundred and ninety nine year'),[1999," ",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('one thousand and one year'),[1001,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('one thousand and ten year'),[1010,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('one thousand and twenty year'),[1020,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('one thousand and twenty one year'),[1021,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('one thousand and twenty and one year'),[1021,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('twelve thousand and one hundred year'),[12100,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('twelve thousand one hundred and one year'),[12101,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('twelve thousand one hundred and ten year'),[12110,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('twelve thousand one hundred and twenty year'),[12120,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('twelve thousand one hundred and twenty one year'),[12121,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('twelve thousand one hundred and twenty and one year'),[12121,"",'year'])
+        assert.deepEqual(P.seq(parser,P.optWhitespace, year).tryParse('two hundred and twelve million, one hundred and twenty one thousand, two hundred and twelve year'),[212121212,"",'year'])
     })
 
 });

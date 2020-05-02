@@ -145,7 +145,7 @@ function tailParser( [mult,base] ) {
     return optional(and(
       P.alt( 
         bigNumberParser(smallerPowersOfTen(base)),
-        lessThanThousand
+        lessThanThousand.or(P.succeed(0))
     ))).map( o => base*mult+(o||0) )  
   }
   // If the base is one, there are no more powers of ten that are smaller. 
