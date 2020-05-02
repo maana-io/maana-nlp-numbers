@@ -2,7 +2,7 @@
   "name": "maana-nlp-numbers",
   "author": "Maana, Inc",
   "license": "MIT",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A simple, deterministic, monadic parser for natural language numbers",
   "repository": {
     "type": "git",
